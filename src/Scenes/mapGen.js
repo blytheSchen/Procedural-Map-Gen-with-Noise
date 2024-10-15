@@ -72,7 +72,7 @@ class mapGen extends Phaser.Scene {
     }
 
     setMapVals() {
-        let genVals = [
+        this.genVals = [
             [],[],[],[],[],
             [],[],[],[],[],
             [],[],[],[],[]
@@ -83,11 +83,11 @@ class mapGen extends Phaser.Scene {
                 let n = noise.perlin2(x / this.frequency, y / this.frequency); // basically zoom in
                 n = (n + 1.0) / 2.0;
 
-                genVals[y][x] = n;
+                this.genVals[y][x] = n;
             }
         }
 
-        console.log(genVals); // essentially an array of heights
+        console.log(this.genVals); // essentially an array of heights
 
         for (let y = 0; y < this.mapHeight; y++) {
             for (let x = 0; x < this.mapWidth; x++) {
@@ -95,18 +95,12 @@ class mapGen extends Phaser.Scene {
                 this.dirtPlacement[y][x] = this.blankTile;
                 this.shroomPlacement[y][x] = this.blankTile;
 
-                if (genVals[y][x] > 0.67) {
+                if (this.genVals[y][x] > 0.67) {
                     this.dirtPlacement[y][x] = this.dirtTile; //dirt
                     this.grassPlacement[y][x] = this.grassTile;
                 }
-                else if (genVals[y][x] > 0.5) {
+                else if (this.genVals[y][x] > 0.5) {
                     this.grassPlacement[y][x] = this.grassTile; //grass
-                    if (genVals[y][x] > 0.66) {
-                        this.shroomPlacement[y][x] = this.shroomTile1;
-                    }
-                    else if (genVals[y][x] < 0.54 && genVals[y][x] > 0.53) {
-                        this.shroomPlacement[y][x] = this.shroomTile2;
-                    }
                 }
                 // remaining vals are for blank areas/water
             }
@@ -114,6 +108,7 @@ class mapGen extends Phaser.Scene {
 
         this.setGrassTransition();
         this.setDirtTransition();
+        this.setShrooms();
 
         this.dirtMap = this.make.tilemap({
             data: this.dirtPlacement,
@@ -136,6 +131,26 @@ class mapGen extends Phaser.Scene {
         this.grassLayer = this.grassMap.createLayer(0, this.tilesheet, 0, 0);
         this.dirtLayer = this.dirtMap.createLayer(0, this.tilesheet, 0, 0);
         this.shroomLayer = this.shroomMap.createLayer(0, this.tilesheet, 0, 0);
+    }
+
+    setShrooms() {
+        for (let y = 0; y < this.mapHeight; y++) {
+            for (let x = 0; x < this.mapWidth; x++) {
+                if (this.grassPlacement[y][x] == this.grassTile && this.dirtPlacement[y][x] == this.blankTile) // if the tile has grass ONLY
+                {
+                    if (this.genVals[y][x] > 0.66) {
+                        this.shroomPlacement[y][x] = this.shroomTile1;
+                    }
+                    else if (this.genVals[y][x] < 0.54 && this.genVals[y][x] > 0.53) {
+                        this.shroomPlacement[y][x] = this.shroomTile2;
+                    }
+                }
+                else
+                {
+                    this.shroomPlacement[y][x] = this.blankTile;
+                }
+            }
+        }
     }
 
     setGrassTransition() {
@@ -238,6 +253,7 @@ class mapGen extends Phaser.Scene {
 
             this.grassMap.destroy();
             this.dirtMap.destroy();
+            this.shroomMap.destroy();
             this.setMapVals();
         }
 
@@ -248,6 +264,7 @@ class mapGen extends Phaser.Scene {
 
             this.grassMap.destroy();
             this.dirtMap.destroy();
+            this.shroomMap.destroy();
             this.setMapVals();
         }
     }
