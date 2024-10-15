@@ -6,6 +6,7 @@ class mapGen extends Phaser.Scene {
     preload() {
         this.load.path = "./assets/"
         this.load.image("mapTiles", "mapPack_spritesheet.png"); 
+        document.getElementById('description').innerHTML = '<h2>mapGen.js<br>R = regen map<br>, = zoom in<br>. = zoom out<br>T = toggle mushroom visibility</h2>\n'
     }
 
     create() {
@@ -17,6 +18,8 @@ class mapGen extends Phaser.Scene {
         this.waterTile = 56;
         this.grassTile = 40;
         this.dirtTile = 105;
+        this.shroomTile1 = 62;
+        this.shroomTile2 = 48;
 
         this.grassPlacement = [
             [],[],[],[],[],
@@ -25,6 +28,12 @@ class mapGen extends Phaser.Scene {
         ];
 
         this.dirtPlacement = [
+            [],[],[],[],[],
+            [],[],[],[],[],
+            [],[],[],[],[]
+        ];
+
+        this.shroomPlacement = [
             [],[],[],[],[],
             [],[],[],[],[],
             [],[],[],[],[]
@@ -57,6 +66,7 @@ class mapGen extends Phaser.Scene {
         this.setMapVals();
 
         this.regen = this.input.keyboard.addKey('R');
+        this.toggleShrooms = this.input.keyboard.addKey('T');
         this.zoomIn = this.input.keyboard.addKey('COMMA');
         this.zoomOut = this.input.keyboard.addKey('PERIOD');
     }
@@ -83,6 +93,7 @@ class mapGen extends Phaser.Scene {
             for (let x = 0; x < this.mapWidth; x++) {
                 this.grassPlacement[y][x] = this.blankTile;
                 this.dirtPlacement[y][x] = this.blankTile;
+                this.shroomPlacement[y][x] = this.blankTile;
 
                 if (genVals[y][x] > 0.67) {
                     this.dirtPlacement[y][x] = this.dirtTile; //dirt
@@ -90,6 +101,12 @@ class mapGen extends Phaser.Scene {
                 }
                 else if (genVals[y][x] > 0.5) {
                     this.grassPlacement[y][x] = this.grassTile; //grass
+                    if (genVals[y][x] > 0.66) {
+                        this.shroomPlacement[y][x] = this.shroomTile1;
+                    }
+                    else if (genVals[y][x] < 0.54 && genVals[y][x] > 0.53) {
+                        this.shroomPlacement[y][x] = this.shroomTile2;
+                    }
                 }
                 // remaining vals are for blank areas/water
             }
@@ -110,8 +127,15 @@ class mapGen extends Phaser.Scene {
             tileHeight: 64
         })
 
+        this.shroomMap = this.make.tilemap({
+            data: this.shroomPlacement,
+            tileWidth: 64,
+            tileHeight: 64
+        })
+
         this.grassLayer = this.grassMap.createLayer(0, this.tilesheet, 0, 0);
         this.dirtLayer = this.dirtMap.createLayer(0, this.tilesheet, 0, 0);
+        this.shroomLayer = this.shroomMap.createLayer(0, this.tilesheet, 0, 0);
     }
 
     setGrassTransition() {
@@ -194,6 +218,17 @@ class mapGen extends Phaser.Scene {
         if(Phaser.Input.Keyboard.JustDown(this.regen)) {
             console.log("regenerating map!");
             this.scene.restart();
+        }
+
+        if(Phaser.Input.Keyboard.JustDown(this.toggleShrooms)) {
+            console.log("toggling shroom visibility");
+            
+            if (this.shroomLayer.visible == true) {
+                this.shroomLayer.setVisible(false);
+            }
+            else {
+                this.shroomLayer.setVisible(true);
+            }
         }
 
         if(Phaser.Input.Keyboard.JustDown(this.zoomIn)) {
